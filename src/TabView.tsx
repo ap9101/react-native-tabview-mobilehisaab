@@ -50,17 +50,22 @@ const TabView: React.FC<TabViewProps> = ({
 
    // Calculate tab width based on content and screen
    const calculateTabWidth = useCallback((title: string, index: number) => {
-      if (tabBarWidthDivider) {
-         return screenWidth / tabBarWidthDivider;
-      }
-
-      // Estimate text width (rough calculation)
-      const estimatedTextWidth = title.length * 8 + 32; // 8px per char + padding
-      const minWidth = Math.max(estimatedTextWidth, 80);
-      const maxWidth = screenWidth / 3;
-
-      return Math.min(maxWidth, minWidth);
-   }, [tabBarWidthDivider]);
+     if (tabBarWidthDivider) {
+       return screenWidth / tabBarWidthDivider;
+     }
+     
+     // For 3 or fewer tabs, distribute evenly across screen
+     if (routes.length <= 3) {
+       return (screenWidth - 32) / routes.length; // 32 for padding
+     }
+     
+     // For more tabs, use consistent width based on content
+     const estimatedTextWidth = title.length * 9 + 48; // 9px per char + padding
+     const minWidth = 100; // Minimum tab width
+     const maxWidth = screenWidth / 2.5; // Maximum tab width
+     
+     return Math.min(maxWidth, Math.max(minWidth, estimatedTextWidth));
+   }, [tabBarWidthDivider, routes.length]);
 
    // Calculate all tab widths
    const calculatedTabWidths = useMemo(() => {
@@ -161,27 +166,27 @@ const TabView: React.FC<TabViewProps> = ({
 
    // Enhanced scroll handler with better gesture detection
    const scrollHandler = useAnimatedScrollHandler({
-     onScroll: (event) => {
-       scrollX.value = event.contentOffset.x;
-     },
-     onBeginDrag: () => {
-       isUserScrolling.current = true;
-     },
-     onMomentumBegin: () => {
-       isUserScrolling.current = true;
-     },
-     onMomentumEnd: (event) => {
-       const newIndex = Math.round(event.contentOffset.x / screenWidth);
-       const clampedIndex = Math.max(0, Math.min(newIndex, routes.length - 1));
-       runOnJS(updateIndex)(clampedIndex);
-       isUserScrolling.current = false;
-     },
-     onEndDrag: (event) => {
-       const newIndex = Math.round(event.contentOffset.x / screenWidth);
-       const clampedIndex = Math.max(0, Math.min(newIndex, routes.length - 1));
-       runOnJS(updateIndex)(clampedIndex);
-       isUserScrolling.current = false;
-     },
+      onScroll: (event) => {
+         scrollX.value = event.contentOffset.x;
+      },
+      onBeginDrag: () => {
+         isUserScrolling.current = true;
+      },
+      onMomentumBegin: () => {
+         isUserScrolling.current = true;
+      },
+      onMomentumEnd: (event) => {
+         const newIndex = Math.round(event.contentOffset.x / screenWidth);
+         const clampedIndex = Math.max(0, Math.min(newIndex, routes.length - 1));
+         runOnJS(updateIndex)(clampedIndex);
+         isUserScrolling.current = false;
+      },
+      onEndDrag: (event) => {
+         const newIndex = Math.round(event.contentOffset.x / screenWidth);
+         const clampedIndex = Math.max(0, Math.min(newIndex, routes.length - 1));
+         runOnJS(updateIndex)(clampedIndex);
+         isUserScrolling.current = false;
+      },
    });
 
    // Optimized indicator animation
@@ -276,8 +281,10 @@ const TabView: React.FC<TabViewProps> = ({
             scrollEnabled={scrollEnabled}
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={{
-               paddingHorizontal: 0,
+               paddingHorizontal: routes.length <= 3 ? 0 : 8,
                flexDirection: 'row',
+               justifyContent: routes.length <= 3 ? 'space-around' : 'flex-start',
+               minWidth: routes.length <= 3 ? screenWidth - 32 : undefined,
             }}
             style={{ flexGrow: 0 }}
          >
@@ -294,11 +301,11 @@ const TabView: React.FC<TabViewProps> = ({
                         {
                            width: tabWidth,
                            paddingVertical: 12,
-                           paddingHorizontal: 16,
+                           paddingHorizontal: routes.length <= 3 ? 8 : 12,
                            alignItems: 'center',
                            justifyContent: 'center',
                            borderRadius: showIndicator ? 0 : 12,
-                           marginHorizontal: showIndicator ? 0 : 4,
+                           marginHorizontal: showIndicator ? (routes.length <= 3 ? 0 : 2) : 4,
                            backgroundColor: showIndicator
                               ? 'transparent'
                               : (isActive
@@ -366,36 +373,36 @@ const TabView: React.FC<TabViewProps> = ({
 
    // Simple pan gesture for better swipe detection
    const panGesture = Gesture.Pan()
-     .onStart(() => {
-       isUserScrolling.current = true;
-     })
-     .onEnd(() => {
-       isUserScrolling.current = false;
-     });
+      .onStart(() => {
+         isUserScrolling.current = true;
+      })
+      .onEnd(() => {
+         isUserScrolling.current = false;
+      });
 
    return (
       <Box flex={1} style={{ backgroundColor: colorMode === 'dark' ? '#000000' : '#ffffff' }}>
          {renderTabBar()}
 
          <GestureDetector gesture={panGesture}>
-           <Animated.ScrollView
-           ref={scrollViewRef}
-           horizontal
-           pagingEnabled
-           scrollEventThrottle={16}
-           showsHorizontalScrollIndicator={false}
-           onScroll={scrollHandler}
-           bounces={false}
-           decelerationRate="fast"
-           snapToInterval={screenWidth}
-           snapToAlignment="center"
-           scrollEnabled={true}
-           nestedScrollEnabled={true}
-           contentContainerStyle={{
-             width: screenWidth * routes.length,
-           }}
-           style={{ flex: 1 }}
-         >
+            <Animated.ScrollView
+               ref={scrollViewRef}
+               horizontal
+               pagingEnabled
+               scrollEventThrottle={16}
+               showsHorizontalScrollIndicator={false}
+               onScroll={scrollHandler}
+               bounces={false}
+               decelerationRate="fast"
+               snapToInterval={screenWidth}
+               snapToAlignment="center"
+               scrollEnabled={true}
+               nestedScrollEnabled={true}
+               contentContainerStyle={{
+                  width: screenWidth * routes.length,
+               }}
+               style={{ flex: 1 }}
+            >
                {routes.map((route, index) => {
                   return (
                      <Box
@@ -408,10 +415,10 @@ const TabView: React.FC<TabViewProps> = ({
                         {renderScene({ route, index, isActive: currentIndex === index })}
                      </Box>
                   );
-           })}
-           </Animated.ScrollView>
+               })}
+            </Animated.ScrollView>
          </GestureDetector>
-     </Box>
+      </Box>
    );
 };
 
