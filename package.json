@@ -1,6 +1,6 @@
 {
   "name": "react-native-tabview-mobilehisaab",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "A powerful and customizable React Native TabView component with RTL support, smooth animations, and gesture handling",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
