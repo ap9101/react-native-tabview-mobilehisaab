@@ -50,21 +50,21 @@ const TabView: React.FC<TabViewProps> = ({
 
    // Calculate tab width based on content and screen
    const calculateTabWidth = useCallback((title: string, index: number) => {
-     if (tabBarWidthDivider) {
-       return screenWidth / tabBarWidthDivider;
-     }
-     
-     // For 3 or fewer tabs, distribute evenly across screen
-     if (routes.length <= 3) {
-       return (screenWidth - 32) / routes.length; // 32 for padding
-     }
-     
-     // For more tabs, use consistent width based on content
-     const estimatedTextWidth = title.length * 9 + 48; // 9px per char + padding
-     const minWidth = 100; // Minimum tab width
-     const maxWidth = screenWidth / 2.5; // Maximum tab width
-     
-     return Math.min(maxWidth, Math.max(minWidth, estimatedTextWidth));
+      if (tabBarWidthDivider) {
+         return screenWidth / tabBarWidthDivider;
+      }
+
+      // For 3 or fewer tabs, distribute evenly across screen
+      if (routes.length <= 3) {
+         return (screenWidth - 32) / routes.length; // 32 for padding
+      }
+
+      // For more tabs, use consistent width based on content
+      const estimatedTextWidth = title.length * 9 + 48; // 9px per char + padding
+      const minWidth = 100; // Minimum tab width
+      const maxWidth = screenWidth / 2.5; // Maximum tab width
+
+      return Math.min(maxWidth, Math.max(minWidth, estimatedTextWidth));
    }, [tabBarWidthDivider, routes.length]);
 
    // Calculate all tab widths
