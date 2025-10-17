@@ -115,36 +115,18 @@ const TabView: React.FC<TabViewProps> = ({
       },
    });
 
-   // Indicator animation
-   const indicatorAnimatedStyle = useAnimatedStyle(() => {
-      // Calculate actual tab positions based on current index
-      const currentTabIndex = Math.round(scrollX.value / screenWidth);
-      const clampedIndex = Math.max(0, Math.min(currentTabIndex, routes.length - 1));
-
-      // For even distribution (3 or fewer tabs), calculate position differently
-      let translateX;
-      if (routes.length <= 3) {
-         const tabSpacing = (screenWidth - 32) / routes.length;
-         translateX = interpolate(
-            scrollX.value,
-            routes.map((_, i) => i * screenWidth),
-            routes.map((_, i) => i * tabSpacing),
-            Extrapolate.CLAMP,
-         );
-      } else {
-         translateX = interpolate(
-            scrollX.value,
-            routes.map((_, i) => i * screenWidth),
-            routes.map((_, i) => i * tabWidth),
-            Extrapolate.CLAMP,
-         );
-      }
-
+   // Simple indicator positioning based on current index
+   const calculatedIndicatorStyle = useMemo(() => {
       return {
-         transform: [{ translateX }],
-         width: routes.length <= 3 ? (screenWidth - 32) / routes.length : tabWidth,
+         position: 'absolute' as const,
+         bottom: 4,
+         left: currentIndex * tabWidth,
+         height: 3,
+         width: tabWidth,
+         backgroundColor: '#007AFF',
+         borderRadius: 2,
       };
-   });
+   }, [currentIndex, tabWidth]);
 
    // Tab animation
    const getTabAnimatedStyle = useCallback((index: number) => {
@@ -248,17 +230,10 @@ const TabView: React.FC<TabViewProps> = ({
 
             {/* Indicator */}
             {showIndicator && (
-               <Animated.View
+               <Box
                   style={[
-                     {
-                        position: 'absolute',
-                        bottom: 4,
-                        height: 3,
-                        backgroundColor: '#007AFF',
-                        borderRadius: 2,
-                     },
-                     indicatorAnimatedStyle,
-                     indicatorStyle,
+                     calculatedIndicatorStyle,
+                     indicatorStyle, // User's custom indicator style from props
                   ]}
                />
             )}
