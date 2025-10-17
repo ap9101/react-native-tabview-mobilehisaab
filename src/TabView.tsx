@@ -120,7 +120,7 @@ const TabView: React.FC<TabViewProps> = ({
       // Calculate actual tab positions based on current index
       const currentTabIndex = Math.round(scrollX.value / screenWidth);
       const clampedIndex = Math.max(0, Math.min(currentTabIndex, routes.length - 1));
-      
+
       // For even distribution (3 or fewer tabs), calculate position differently
       let translateX;
       if (routes.length <= 3) {
