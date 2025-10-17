@@ -159,24 +159,29 @@ const TabView: React.FC<TabViewProps> = ({
       }
    }, [currentIndex, onIndexChange, routes.length, scrollToTabInTabBar]);
 
-   // Optimized scroll handler
+   // Enhanced scroll handler with better gesture detection
    const scrollHandler = useAnimatedScrollHandler({
-      onScroll: (event) => {
-         scrollX.value = event.contentOffset.x;
-
-         if (isUserScrolling.current) {
-            const newIndex = Math.round(event.contentOffset.x / screenWidth);
-            const clampedIndex = Math.max(0, Math.min(newIndex, routes.length - 1));
-
-            runOnJS(updateIndex)(clampedIndex);
-         }
-      },
-      onBeginDrag: () => {
-         isUserScrolling.current = true;
-      },
-      onEndDrag: () => {
-         isUserScrolling.current = false;
-      },
+     onScroll: (event) => {
+       scrollX.value = event.contentOffset.x;
+     },
+     onBeginDrag: () => {
+       isUserScrolling.current = true;
+     },
+     onMomentumBegin: () => {
+       isUserScrolling.current = true;
+     },
+     onMomentumEnd: (event) => {
+       const newIndex = Math.round(event.contentOffset.x / screenWidth);
+       const clampedIndex = Math.max(0, Math.min(newIndex, routes.length - 1));
+       runOnJS(updateIndex)(clampedIndex);
+       isUserScrolling.current = false;
+     },
+     onEndDrag: (event) => {
+       const newIndex = Math.round(event.contentOffset.x / screenWidth);
+       const clampedIndex = Math.max(0, Math.min(newIndex, routes.length - 1));
+       runOnJS(updateIndex)(clampedIndex);
+       isUserScrolling.current = false;
+     },
    });
 
    // Optimized indicator animation
@@ -359,27 +364,38 @@ const TabView: React.FC<TabViewProps> = ({
       </Box>
    );
 
+   // Simple pan gesture for better swipe detection
+   const panGesture = Gesture.Pan()
+     .onStart(() => {
+       isUserScrolling.current = true;
+     })
+     .onEnd(() => {
+       isUserScrolling.current = false;
+     });
+
    return (
       <Box flex={1} style={{ backgroundColor: colorMode === 'dark' ? '#000000' : '#ffffff' }}>
          {renderTabBar()}
 
-         <GestureDetector gesture={Gesture.Pan()}>
-            <Animated.ScrollView
-               ref={scrollViewRef}
-               horizontal
-               pagingEnabled
-               scrollEventThrottle={16}
-               showsHorizontalScrollIndicator={false}
-               onScroll={scrollHandler}
-               bounces={false}
-               decelerationRate="fast"
-               snapToInterval={screenWidth}
-               snapToAlignment="center"
-               contentContainerStyle={{
-                  width: screenWidth * routes.length,
-               }}
-               style={{ flex: 1 }}
-            >
+         <GestureDetector gesture={panGesture}>
+           <Animated.ScrollView
+           ref={scrollViewRef}
+           horizontal
+           pagingEnabled
+           scrollEventThrottle={16}
+           showsHorizontalScrollIndicator={false}
+           onScroll={scrollHandler}
+           bounces={false}
+           decelerationRate="fast"
+           snapToInterval={screenWidth}
+           snapToAlignment="center"
+           scrollEnabled={true}
+           nestedScrollEnabled={true}
+           contentContainerStyle={{
+             width: screenWidth * routes.length,
+           }}
+           style={{ flex: 1 }}
+         >
                {routes.map((route, index) => {
                   return (
                      <Box
@@ -392,10 +408,10 @@ const TabView: React.FC<TabViewProps> = ({
                         {renderScene({ route, index, isActive: currentIndex === index })}
                      </Box>
                   );
-               })}
-            </Animated.ScrollView>
+           })}
+           </Animated.ScrollView>
          </GestureDetector>
-      </Box>
+     </Box>
    );
 };
 
