@@ -41,11 +41,13 @@ yarn add react-native-reanimated react-native-gesture-handler
 ### 3. Platform-specific setup
 
 #### iOS
+
 ```bash
 cd ios && pod install
 ```
 
 #### Android
+
 Add to `android/app/src/main/java/.../MainActivity.java`:
 
 ```java
@@ -57,7 +59,7 @@ For React Native Reanimated, add to `babel.config.js`:
 ```javascript
 module.exports = {
   plugins: [
-    'react-native-reanimated/plugin', // This should be last
+    "react-native-reanimated/plugin", // This should be last
   ],
 };
 ```
@@ -65,34 +67,34 @@ module.exports = {
 ## 🚀 Quick Start
 
 ```tsx
-import React, { useState } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import TabView from 'react-native-tabview-mobilehisaab';
+import React, { useState } from "react";
+import { View, Text, StyleSheet } from "react-native";
+import TabView from "react-native-tabview-mobilehisaab";
 
 const App = () => {
   const [index, setIndex] = useState(0);
-  
+
   const routes = [
-    { key: 'first', title: 'First Tab' },
-    { key: 'second', title: 'Second Tab' },
-    { key: 'third', title: 'Third Tab' },
+    { key: "first", title: "First Tab" },
+    { key: "second", title: "Second Tab" },
+    { key: "third", title: "Third Tab" },
   ];
 
   const renderScene = ({ route, index, isActive }) => {
     switch (route.key) {
-      case 'first':
+      case "first":
         return (
           <View style={styles.scene}>
             <Text style={styles.text}>First Tab Content</Text>
           </View>
         );
-      case 'second':
+      case "second":
         return (
           <View style={styles.scene}>
             <Text style={styles.text}>Second Tab Content</Text>
           </View>
         );
-      case 'third':
+      case "third":
         return (
           <View style={styles.scene}>
             <Text style={styles.text}>Third Tab Content</Text>
@@ -116,14 +118,14 @@ const App = () => {
 const styles = StyleSheet.create({
   scene: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#f5f5f5',
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#f5f5f5",
   },
   text: {
     fontSize: 18,
-    fontWeight: '600',
-    color: '#333',
+    fontWeight: "600",
+    color: "#333",
   },
 });
 
@@ -141,27 +143,27 @@ export default App;
   onIndexChange={setIndex}
   renderScene={renderScene}
   tabBarStyle={{
-    backgroundColor: '#ffffff',
-    shadowColor: '#000',
+    backgroundColor: "#ffffff",
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 4,
   }}
   activeTabStyle={{
-    backgroundColor: '#007AFF',
+    backgroundColor: "#007AFF",
     borderRadius: 12,
   }}
   activeLabelStyle={{
-    color: '#ffffff',
-    fontWeight: '600',
+    color: "#ffffff",
+    fontWeight: "600",
   }}
   labelStyle={{
-    color: '#666666',
-    fontWeight: '500',
+    color: "#666666",
+    fontWeight: "500",
   }}
   indicatorStyle={{
-    backgroundColor: '#007AFF',
+    backgroundColor: "#007AFF",
     height: 3,
     borderRadius: 2,
   }}
@@ -191,13 +193,13 @@ The component automatically adapts to your app's color scheme, but you can also 
   onIndexChange={setIndex}
   renderScene={renderScene}
   tabBarStyle={{
-    backgroundColor: '#1a1a1a', // Dark background
+    backgroundColor: "#1a1a1a", // Dark background
   }}
   activeLabelStyle={{
-    color: '#ffffff',
+    color: "#ffffff",
   }}
   labelStyle={{
-    color: '#cccccc',
+    color: "#cccccc",
   }}
 />
 ```
@@ -206,20 +208,20 @@ The component automatically adapts to your app's color scheme, but you can also 
 
 ### Props
 
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `routes` | `TabRoute[]` | `[]` | Array of route objects |
-| `initialIndex` | `number` | `0` | Initial tab index |
-| `onIndexChange` | `(index: number) => void` | - | Callback when tab changes |
-| `renderScene` | `SceneRendererProps => ReactNode` | - | Function to render tab content |
-| `isRTL` | `boolean` | `false` | Enable RTL support |
-| `scrollEnabled` | `boolean` | `true` | Enable tab bar scrolling |
-| `tabBarStyle` | `ViewStyle` | - | Custom tab bar style |
-| `tabStyle` | `ViewStyle` | - | Custom inactive tab style |
-| `activeTabStyle` | `ViewStyle` | - | Custom active tab style |
-| `labelStyle` | `TextStyle` | - | Custom inactive label style |
-| `activeLabelStyle` | `TextStyle` | - | Custom active label style |
-| `indicatorStyle` | `ViewStyle` | - | Custom indicator style |
+| Prop               | Type                              | Default | Description                    |
+| ------------------ | --------------------------------- | ------- | ------------------------------ |
+| `routes`           | `TabRoute[]`                      | `[]`    | Array of route objects         |
+| `initialIndex`     | `number`                          | `0`     | Initial tab index              |
+| `onIndexChange`    | `(index: number) => void`         | -       | Callback when tab changes      |
+| `renderScene`      | `SceneRendererProps => ReactNode` | -       | Function to render tab content |
+| `isRTL`            | `boolean`                         | `false` | Enable RTL support             |
+| `scrollEnabled`    | `boolean`                         | `true`  | Enable tab bar scrolling       |
+| `tabBarStyle`      | `ViewStyle`                       | -       | Custom tab bar style           |
+| `tabStyle`         | `ViewStyle`                       | -       | Custom inactive tab style      |
+| `activeTabStyle`   | `ViewStyle`                       | -       | Custom active tab style        |
+| `labelStyle`       | `TextStyle`                       | -       | Custom inactive label style    |
+| `activeLabelStyle` | `TextStyle`                       | -       | Custom active label style      |
+| `indicatorStyle`   | `ViewStyle`                       | -       | Custom indicator style         |
 
 ### Types
 
@@ -255,10 +257,12 @@ const MemoizedScene = React.memo(({ route, index, isActive }) => {
 ### Common Issues
 
 1. **Tabs not scrolling smoothly**
+
    - Ensure react-native-reanimated is properly installed
    - Check if babel.config.js includes the reanimated plugin
 
 2. **Gesture handling not working**
+
    - Verify react-native-gesture-handler installation
    - Make sure to wrap your app with GestureHandlerRootView
 
