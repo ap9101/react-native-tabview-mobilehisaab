@@ -35,12 +35,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/mobilehisaab/react-native-tabview.git"
+    "url": "https://github.com/ap9101/react-native-tabview-mobilehisaab.git"
   },
   "bugs": {
-    "url": "https://github.com/mobilehisaab/react-native-tabview/issues"
+    "url": "https://github.com/ap9101/react-native-tabview-mobilehisaab/issues"
   },
-  "homepage": "https://github.com/mobilehisaab/react-native-tabview#readme",
+  "homepage": "https://github.com/ap9101/react-native-tabview-mobilehisaab#readme",
   "peerDependencies": {
     "react": ">=16.8.0",
     "react-native": ">=0.60.0",
