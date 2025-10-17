@@ -1,121 +1,116 @@
-# @mobilehisaab/react-native-tabview
+# React Native TabView - MobileHisaab
 
-A powerful and customizable React Native TabView component with RTL support, smooth animations, and gesture handling.
+A **beautiful**, **smooth**, and **highly customizable** React Native TabView component with RTL support, fluid animations, and gesture handling. Built with React Native Reanimated 3 for optimal performance.
 
-## Features
+![Version](https://img.shields.io/npm/v/react-native-tabview-mobilehisaab)
+![License](https://img.shields.io/npm/l/react-native-tabview-mobilehisaab)
+![Downloads](https://img.shields.io/npm/dm/react-native-tabview-mobilehisaab)
 
-- 🎨 **Highly Customizable** - Customize colors, styles, and animations
+## ✨ Features
+
+- 🎨 **Beautiful Design** - Modern, clean UI with smooth animations
+- 🚀 **High Performance** - Built with React Native Reanimated 3
+- 📱 **Responsive** - Adapts to different screen sizes
 - 🌍 **RTL Support** - Full right-to-left language support
-- 🎭 **Smooth Animations** - Powered by React Native Reanimated
-- 👆 **Gesture Handling** - Built-in pan gesture support
-- 📱 **Responsive** - Works on all screen sizes
-- 🎯 **TypeScript** - Full TypeScript support
-- ⚡ **Performance** - Optimized for smooth scrolling
-- 🎨 **Theme Support** - Light and dark mode support
+- 🎯 **Gesture Handling** - Smooth swipe gestures with react-native-gesture-handler
+- 🎭 **Dark Mode** - Built-in dark/light theme support
+- 🔧 **Highly Customizable** - Extensive styling options
+- ⚡ **TypeScript** - Full TypeScript support
+- 🎪 **Smooth Animations** - Fluid tab transitions and indicator animations
 
-## Installation
+## 📦 Installation
+
+### 1. Install the package
 
 ```bash
-npm install @mobilehisaab/react-native-tabview
+npm install react-native-tabview-mobilehisaab
 # or
-yarn add @mobilehisaab/react-native-tabview
+yarn add react-native-tabview-mobilehisaab
 ```
 
-### Peer Dependencies
+### 2. Install peer dependencies
 
 This package requires the following peer dependencies:
 
 ```bash
-npm install react-native-reanimated react-native-gesture-handler react-native-responsive-screen
+npm install react-native-reanimated react-native-gesture-handler
+# or
+yarn add react-native-reanimated react-native-gesture-handler
 ```
 
-## Quick Start
+### 3. Platform-specific setup
+
+#### iOS
+```bash
+cd ios && pod install
+```
+
+#### Android
+Add to `android/app/src/main/java/.../MainActivity.java`:
+
+```java
+import com.swmansion.gesturehandler.react.RNGestureHandlerEnabledRootView;
+```
+
+For React Native Reanimated, add to `babel.config.js`:
+
+```javascript
+module.exports = {
+  plugins: [
+    'react-native-reanimated/plugin', // This should be last
+  ],
+};
+```
+
+## 🚀 Quick Start
 
 ```tsx
-import React from 'react';
-import { View, Text } from 'react-native';
-import { TabView } from '@mobilehisaab/react-native-tabview';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet } from 'react-native';
+import TabView from 'react-native-tabview-mobilehisaab';
 
-const MyComponent = () => {
+const App = () => {
+  const [index, setIndex] = useState(0);
+  
   const routes = [
-    { key: 'first', title: 'First' },
-    { key: 'second', title: 'Second' },
-    { key: 'third', title: 'Third' },
+    { key: 'first', title: 'First Tab' },
+    { key: 'second', title: 'Second Tab' },
+    { key: 'third', title: 'Third Tab' },
   ];
 
   const renderScene = ({ route, index, isActive }) => {
-    return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <Text>{route.title} Tab</Text>
-      </View>
-    );
+    switch (route.key) {
+      case 'first':
+        return (
+          <View style={styles.scene}>
+            <Text style={styles.text}>First Tab Content</Text>
+          </View>
+        );
+      case 'second':
+        return (
+          <View style={styles.scene}>
+            <Text style={styles.text}>Second Tab Content</Text>
+          </View>
+        );
+      case 'third':
+        return (
+          <View style={styles.scene}>
+            <Text style={styles.text}>Third Tab Content</Text>
+          </View>
+        );
+      default:
+        return null;
+    }
   };
 
   return (
     <TabView
       routes={routes}
+      initialIndex={index}
+      onIndexChange={setIndex}
       renderScene={renderScene}
-      initialIndex={0}
-      onIndexChange={index => console.log('Tab changed:', index)}
     />
   );
-};
-```
-
-## API Reference
-
-### TabView Props
-
-| Prop                 | Type                                                                                 | Default | Description                               |
-| -------------------- | ------------------------------------------------------------------------------------ | ------- | ----------------------------------------- |
-| `routes`             | `TabRoute[]`                                                                         | `[]`    | Array of route objects with key and title |
-| `initialIndex`       | `number`                                                                             | `0`     | Initial active tab index                  |
-| `onIndexChange`      | `(index: number) => void`                                                            | -       | Callback when tab index changes           |
-| `renderScene`        | `(params: { route: TabRoute; index: number; isActive: boolean }) => React.ReactNode` | -       | Function to render each tab scene         |
-| `isRTL`              | `boolean`                                                                            | `false` | Enable RTL (Right-to-Left) support        |
-| `settingTab`         | `boolean`                                                                            | `false` | Special styling for settings tabs         |
-| `tabBarStyle`        | `ViewStyle`                                                                          | -       | Custom tab bar style                      |
-| `scrollEnabled`      | `boolean`                                                                            | `true`  | Enable/disable tab bar scrolling          |
-| `tabBarWidthDivider` | `number`                                                                             | -       | Divide tab bar width by this number       |
-| `tabStyle`           | `ViewStyle`                                                                          | -       | Custom tab style                          |
-| `activeTabStyle`     | `ViewStyle`                                                                          | -       | Custom active tab style                   |
-| `labelStyle`         | `TextStyle`                                                                          | -       | Custom label style                        |
-| `activeLabelStyle`   | `TextStyle`                                                                          | -       | Custom active label style                 |
-| `indicatorStyle`     | `ViewStyle`                                                                          | -       | Custom indicator style                    |
-
-### TabRoute Interface
-
-```typescript
-interface TabRoute {
-  key: string;
-  title: string;
-  [key: string]: any;
-}
-```
-
-## Examples
-
-### Basic Usage
-
-```tsx
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import { TabView } from '@mobilehisaab/react-native-tabview';
-
-const BasicExample = () => {
-  const routes = [
-    { key: 'home', title: 'Home' },
-    { key: 'search', title: 'Search' },
-    { key: 'profile', title: 'Profile' },
-  ];
-
-  const renderScene = ({ route }) => (
-    <View style={styles.scene}>
-      <Text style={styles.text}>{route.title} Content</Text>
-    </View>
-  );
-
-  return <TabView routes={routes} renderScene={renderScene} initialIndex={0} />;
 };
 
 const styles = StyleSheet.create({
@@ -127,123 +122,186 @@ const styles = StyleSheet.create({
   },
   text: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: '600',
+    color: '#333',
   },
 });
+
+export default App;
+```
+
+## 🎨 Advanced Usage
+
+### Custom Styling
+
+```tsx
+<TabView
+  routes={routes}
+  initialIndex={index}
+  onIndexChange={setIndex}
+  renderScene={renderScene}
+  tabBarStyle={{
+    backgroundColor: '#ffffff',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  }}
+  activeTabStyle={{
+    backgroundColor: '#007AFF',
+    borderRadius: 12,
+  }}
+  activeLabelStyle={{
+    color: '#ffffff',
+    fontWeight: '600',
+  }}
+  labelStyle={{
+    color: '#666666',
+    fontWeight: '500',
+  }}
+  indicatorStyle={{
+    backgroundColor: '#007AFF',
+    height: 3,
+    borderRadius: 2,
+  }}
+/>
 ```
 
 ### RTL Support
 
 ```tsx
-import React from 'react';
-import { TabView } from '@mobilehisaab/react-native-tabview';
-
-const RTLExample = () => {
-  const routes = [
-    { key: 'first', title: 'الأول' },
-    { key: 'second', title: 'الثاني' },
-    { key: 'third', title: 'الثالث' },
-  ];
-
-  return <TabView routes={routes} renderScene={renderScene} isRTL={true} />;
-};
+<TabView
+  routes={routes}
+  initialIndex={index}
+  onIndexChange={setIndex}
+  renderScene={renderScene}
+  isRTL={true} // Enable RTL support
+/>
 ```
 
-### Custom Styling
+### Dark Mode
+
+The component automatically adapts to your app's color scheme, but you can also customize it:
 
 ```tsx
-import React from 'react';
-import { TabView } from '@mobilehisaab/react-native-tabview';
-
-const CustomStyledExample = () => {
-  return (
-    <TabView
-      routes={routes}
-      renderScene={renderScene}
-      tabBarStyle={{
-        backgroundColor: '#2c3e50',
-        paddingVertical: 10,
-      }}
-      activeTabStyle={{
-        backgroundColor: '#3498db',
-        borderRadius: 20,
-      }}
-      activeLabelStyle={{
-        color: '#ffffff',
-        fontWeight: 'bold',
-      }}
-      indicatorStyle={{
-        backgroundColor: '#e74c3c',
-        height: 3,
-      }}
-    />
-  );
-};
+<TabView
+  routes={routes}
+  initialIndex={index}
+  onIndexChange={setIndex}
+  renderScene={renderScene}
+  tabBarStyle={{
+    backgroundColor: '#1a1a1a', // Dark background
+  }}
+  activeLabelStyle={{
+    color: '#ffffff',
+  }}
+  labelStyle={{
+    color: '#cccccc',
+  }}
+/>
 ```
 
-### Fixed Width Tabs
+## 📚 API Reference
+
+### Props
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `routes` | `TabRoute[]` | `[]` | Array of route objects |
+| `initialIndex` | `number` | `0` | Initial tab index |
+| `onIndexChange` | `(index: number) => void` | - | Callback when tab changes |
+| `renderScene` | `SceneRendererProps => ReactNode` | - | Function to render tab content |
+| `isRTL` | `boolean` | `false` | Enable RTL support |
+| `scrollEnabled` | `boolean` | `true` | Enable tab bar scrolling |
+| `tabBarStyle` | `ViewStyle` | - | Custom tab bar style |
+| `tabStyle` | `ViewStyle` | - | Custom inactive tab style |
+| `activeTabStyle` | `ViewStyle` | - | Custom active tab style |
+| `labelStyle` | `TextStyle` | - | Custom inactive label style |
+| `activeLabelStyle` | `TextStyle` | - | Custom active label style |
+| `indicatorStyle` | `ViewStyle` | - | Custom indicator style |
+
+### Types
 
 ```tsx
-import React from 'react';
-import { TabView } from '@mobilehisaab/react-native-tabview';
+interface TabRoute {
+  key: string;
+  title: string;
+}
 
-const FixedWidthExample = () => {
-  return (
-    <TabView
-      routes={routes}
-      renderScene={renderScene}
-      tabBarWidthDivider={3} // Each tab takes 1/3 of screen width
-      scrollEnabled={false} // Disable scrolling for fixed width
-    />
-  );
-};
+interface SceneRendererProps {
+  route: TabRoute;
+  index: number;
+  isActive: boolean;
+}
 ```
 
-## Styling
+## 🎯 Performance Tips
 
-The component uses a theme-based approach for styling. You can customize colors by providing custom styles or by using the built-in theme system.
+1. **Lazy Loading**: Only render active and adjacent tabs for better performance
+2. **Memoization**: Use `React.memo` for your scene components
+3. **Image Optimization**: Optimize images in tab content
+4. **Avoid Heavy Computations**: Move heavy operations outside render
 
-### Theme Colors
-
-```typescript
-const Colors = {
-  light: {
-    activeTabBackground: '#f0f0f0',
-    activeTabText: '#000000',
-    textInactiveTab: '#666666',
-    // ... more colors
-  },
-  dark: {
-    activeTabBackground: '#333333',
-    activeTabText: '#ffffff',
-    textInactiveTab: '#999999',
-    // ... more colors
-  },
-};
+```tsx
+const MemoizedScene = React.memo(({ route, index, isActive }) => {
+  // Your scene content
+  return <YourSceneComponent />;
+});
 ```
 
-## Performance Tips
+## 🐛 Troubleshooting
 
-1. **Memoize your renderScene function** to prevent unnecessary re-renders
-2. **Use `removeClippedSubviews={true}`** for better performance with many tabs
-3. **Avoid complex animations in renderScene** for smoother scrolling
+### Common Issues
 
-## Contributing
+1. **Tabs not scrolling smoothly**
+   - Ensure react-native-reanimated is properly installed
+   - Check if babel.config.js includes the reanimated plugin
+
+2. **Gesture handling not working**
+   - Verify react-native-gesture-handler installation
+   - Make sure to wrap your app with GestureHandlerRootView
+
+3. **TypeScript errors**
+   - Update @types/react-native to latest version
+   - Ensure peer dependencies are installed
+
+### Installation Issues
+
+If you encounter installation issues:
+
+```bash
+# Clean install
+rm -rf node_modules package-lock.json
+npm install
+
+# iOS
+cd ios && rm -rf Pods Podfile.lock && pod install
+
+# Android
+cd android && ./gradlew clean
+```
+
+## 🤝 Contributing
 
 We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
 
-## License
+## 📄 License
 
-MIT © [MobileHisaab Team](https://github.com/mobilehisaab)
+MIT License - see the [LICENSE](LICENSE) file for details.
 
-## Support
+## 🙏 Acknowledgments
 
-If you have any questions or need help, please:
+- Built with [React Native Reanimated](https://github.com/software-mansion/react-native-reanimated)
+- Gesture handling by [React Native Gesture Handler](https://github.com/software-mansion/react-native-gesture-handler)
+- Inspired by [react-native-tab-view](https://github.com/satya164/react-native-tab-view)
 
-1. Check the [documentation](https://github.com/mobilehisaab/react-native-tabview#readme)
-2. Search [existing issues](https://github.com/mobilehisaab/react-native-tabview/issues)
-3. Create a [new issue](https://github.com/mobilehisaab/react-native-tabview/issues/new)
+## 📞 Support
+
+- 📧 Email: support@mobilehisaab.com
+- 🐛 Issues: [GitHub Issues](https://github.com/ap9101/react-native-tabview-mobilehisaab/issues)
+- 💬 Discussions: [GitHub Discussions](https://github.com/ap9101/react-native-tabview-mobilehisaab/discussions)
 
 ---
 
-Made with ❤️ by the MobileHisaab Team
+Made with ❤️ by [MobileHisaab Team](https://mobilehisaab.com)
