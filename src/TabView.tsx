@@ -1,18 +1,15 @@
 import React, { useState, useRef, useCallback, useMemo, useEffect } from 'react';
-import { ScrollView, Dimensions, Platform, ViewStyle, LayoutChangeEvent } from 'react-native';
+import { ScrollView, Dimensions, ViewStyle } from 'react-native';
 import Animated, {
    useSharedValue,
    useAnimatedStyle,
    useAnimatedScrollHandler,
    withTiming,
-   withSpring,
    runOnJS,
    interpolate,
    Extrapolate,
-   useDerivedValue,
 } from 'react-native-reanimated';
-import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import { Box, HStack, Text } from './components';
+import { Box, Text } from './components';
 import { useColorMode } from './hooks/useColorMode';
 import { FontStyles, SCREEN_WIDTH } from './constants';
 import { TabViewProps, TabRoute } from './types';
@@ -37,388 +34,255 @@ const TabView: React.FC<TabViewProps> = ({
    showIndicator = true,
 }) => {
    const [currentIndex, setCurrentIndex] = useState(initialIndex);
-   const [tabWidths, setTabWidths] = useState<number[]>([]);
-   const [tabBarWidth, setTabBarWidth] = useState(screenWidth);
-
    const scrollViewRef = useRef<Animated.ScrollView>(null);
    const tabScrollViewRef = useRef<ScrollView>(null);
-   const isUserScrolling = useRef(false);
-   const isInitialized = useRef(false);
-
+   
    const scrollX = useSharedValue(initialIndex * screenWidth);
    const { colorMode } = useColorMode();
+   
+   // Calculate tab width
+   const tabWidth = useMemo(() => {
+     if (tabBarWidthDivider) {
+       return screenWidth / tabBarWidthDivider;
+     }
+     
+     if (routes.length <= 3) {
+       return (screenWidth - 32) / routes.length;
+     }
+     
+     return Math.max(120, screenWidth / 4);
+   }, [routes.length, tabBarWidthDivider]);
 
-   // Calculate tab width based on content and screen
-   const calculateTabWidth = useCallback((title: string, index: number) => {
-      if (tabBarWidthDivider) {
-         return screenWidth / tabBarWidthDivider;
-      }
-
-      // For 3 or fewer tabs, distribute evenly across screen
-      if (routes.length <= 3) {
-         return (screenWidth - 32) / routes.length; // 32 for padding
-      }
-
-      // For more tabs, use consistent width based on content
-      const estimatedTextWidth = title.length * 9 + 48; // 9px per char + padding
-      const minWidth = 100; // Minimum tab width
-      const maxWidth = screenWidth / 2.5; // Maximum tab width
-
-      return Math.min(maxWidth, Math.max(minWidth, estimatedTextWidth));
-   }, [tabBarWidthDivider, routes.length]);
-
-   // Calculate all tab widths
-   const calculatedTabWidths = useMemo(() => {
-      return routes.map((route, index) => calculateTabWidth(route.title, index));
-   }, [routes, calculateTabWidth]);
-
-   // Update tab widths when routes change
-   useEffect(() => {
-      setTabWidths(calculatedTabWidths);
-   }, [calculatedTabWidths]);
-
-   // Calculate tab positions for scrolling
-   const tabPositions = useMemo(() => {
-      let position = 0;
-      return tabWidths.map((width, index) => {
-         const currentPosition = position;
-         position += width;
-         return currentPosition;
-      });
-   }, [tabWidths]);
-
-   // Scroll to specific tab in tab bar
-   const scrollToTabInTabBar = useCallback((index: number, animated = true) => {
-      if (!tabScrollViewRef.current || tabWidths.length === 0 || !scrollEnabled) return;
-
-      const tabPosition = tabPositions[index] || 0;
-      const tabWidth = tabWidths[index] || 100;
-      const centerPosition = tabPosition + tabWidth / 2;
-      const scrollPosition = Math.max(0, centerPosition - screenWidth / 2);
-
-      tabScrollViewRef.current.scrollTo({
-         x: scrollPosition,
-         animated,
-      });
-   }, [tabPositions, tabWidths, scrollEnabled]);
-
-   // Enhanced scroll to tab function
-   const scrollToTab = useCallback((index: number, animated = true) => {
-      const targetX = index * screenWidth;
-
-      // Update shared value immediately for smooth animations
-      if (animated) {
-         scrollX.value = withTiming(targetX, {
-            duration: 300,
-         });
-      } else {
-         scrollX.value = targetX;
-      }
-
-      // Scroll main content
-      if (scrollViewRef.current) {
-         scrollViewRef.current.scrollTo({
-            x: targetX,
-            animated,
-         });
-      }
-
-      // Scroll tab bar with slight delay for better UX
-      if (animated) {
-         setTimeout(() => scrollToTabInTabBar(index, true), 50);
-      } else {
-         scrollToTabInTabBar(index, false);
-      }
-   }, [scrollX, scrollToTabInTabBar]);
-
-   // Initialize position
-   useEffect(() => {
-      if (!isInitialized.current && tabWidths.length > 0) {
-         scrollToTab(initialIndex, false);
-         setCurrentIndex(initialIndex);
-         isInitialized.current = true;
-      }
-   }, [initialIndex, scrollToTab, tabWidths.length]);
-
-   // Handle tab press with optimized performance
-   const handleTabPress = useCallback((index: number) => {
-      if (index === currentIndex) return;
-
-      // Immediate state update for instant feedback
-      setCurrentIndex(index);
-      onIndexChange?.(index);
-
-      // Animate to new position
-      isUserScrolling.current = false;
-      scrollToTab(index, true);
-   }, [currentIndex, onIndexChange, scrollToTab]);
-
-   // Update index from scroll
+   // Update index when scrolling
    const updateIndex = useCallback((newIndex: number) => {
-      if (newIndex !== currentIndex && newIndex >= 0 && newIndex < routes.length) {
-         setCurrentIndex(newIndex);
-         onIndexChange?.(newIndex);
+     if (newIndex !== currentIndex && newIndex >= 0 && newIndex < routes.length) {
+       setCurrentIndex(newIndex);
+       onIndexChange?.(newIndex);
+       
+       // Auto-scroll tab bar
+       if (tabScrollViewRef.current && routes.length > 3) {
+         const targetX = newIndex * tabWidth - screenWidth / 2 + tabWidth / 2;
+         tabScrollViewRef.current.scrollTo({
+           x: Math.max(0, targetX),
+           animated: true,
+         });
+       }
+     }
+   }, [currentIndex, onIndexChange, routes.length, tabWidth]);
 
-         // Update tab bar scroll position
-         scrollToTabInTabBar(newIndex, true);
-      }
-   }, [currentIndex, onIndexChange, routes.length, scrollToTabInTabBar]);
+   // Handle tab press
+   const handleTabPress = useCallback((index: number) => {
+     if (index === currentIndex) return;
+     
+     const targetX = index * screenWidth;
+     scrollX.value = withTiming(targetX, { duration: 300 });
+     
+     if (scrollViewRef.current) {
+       scrollViewRef.current.scrollTo({
+         x: targetX,
+         animated: true,
+       });
+     }
+     
+     setCurrentIndex(index);
+     onIndexChange?.(index);
+   }, [currentIndex, onIndexChange, scrollX]);
 
-   // Enhanced scroll handler with better gesture detection
+   // Initialize
+   useEffect(() => {
+     const targetX = initialIndex * screenWidth;
+     scrollX.value = targetX;
+     
+     if (scrollViewRef.current) {
+       scrollViewRef.current.scrollTo({
+         x: targetX,
+         animated: false,
+       });
+     }
+     
+     setCurrentIndex(initialIndex);
+   }, [initialIndex, scrollX]);
+
+   // Scroll handler
    const scrollHandler = useAnimatedScrollHandler({
-      onScroll: (event) => {
-         scrollX.value = event.contentOffset.x;
-      },
-      onBeginDrag: () => {
-         isUserScrolling.current = true;
-      },
-      onMomentumBegin: () => {
-         isUserScrolling.current = true;
-      },
-      onMomentumEnd: (event) => {
-         const newIndex = Math.round(event.contentOffset.x / screenWidth);
-         const clampedIndex = Math.max(0, Math.min(newIndex, routes.length - 1));
-         runOnJS(updateIndex)(clampedIndex);
-         isUserScrolling.current = false;
-      },
-      onEndDrag: (event) => {
-         const newIndex = Math.round(event.contentOffset.x / screenWidth);
-         const clampedIndex = Math.max(0, Math.min(newIndex, routes.length - 1));
-         runOnJS(updateIndex)(clampedIndex);
-         isUserScrolling.current = false;
-      },
+     onScroll: (event) => {
+       scrollX.value = event.contentOffset.x;
+     },
+     onMomentumEnd: (event) => {
+       const newIndex = Math.round(event.contentOffset.x / screenWidth);
+       const clampedIndex = Math.max(0, Math.min(newIndex, routes.length - 1));
+       runOnJS(updateIndex)(clampedIndex);
+     },
    });
 
-   // Optimized indicator animation
+   // Indicator animation
    const indicatorAnimatedStyle = useAnimatedStyle(() => {
-      if (tabWidths.length === 0) return { opacity: 0 };
+     const translateX = interpolate(
+       scrollX.value,
+       routes.map((_, i) => i * screenWidth),
+       routes.map((_, i) => i * tabWidth),
+       Extrapolate.CLAMP,
+     );
 
-      const inputRange = routes.map((_, i) => i * screenWidth);
-      const outputRange = tabPositions;
+     return {
+       transform: [{ translateX }],
+       width: tabWidth,
+     };
+   });
 
-      const translateX = interpolate(
+   // Tab animation
+   const getTabAnimatedStyle = useCallback((index: number) => {
+     return useAnimatedStyle(() => {
+       const inputRange = [
+         (index - 1) * screenWidth,
+         index * screenWidth,
+         (index + 1) * screenWidth,
+       ];
+       
+       const opacity = interpolate(
          scrollX.value,
          inputRange,
-         outputRange,
+         [0.6, 1, 0.6],
          Extrapolate.CLAMP,
-      );
+       );
 
-      const widthInputRange = routes.map((_, i) => i * screenWidth);
-      const widthOutputRange = tabWidths;
-
-      const width = interpolate(
-         scrollX.value,
-         widthInputRange,
-         widthOutputRange,
-         Extrapolate.CLAMP,
-      );
-
-      return {
-         transform: [{ translateX }],
-         width,
-         opacity: 1,
-      };
-   }, [tabWidths, tabPositions]);
-
-   // Optimized tab animation
-   const getTabAnimatedStyle = useCallback((index: number) => {
-      return useAnimatedStyle(() => {
-         const inputRange = [
-            (index - 1) * screenWidth,
-            index * screenWidth,
-            (index + 1) * screenWidth,
-         ];
-
-         const opacity = interpolate(
-            scrollX.value,
-            inputRange,
-            [0.6, 1, 0.6],
-            Extrapolate.CLAMP,
-         );
-
-         const scale = interpolate(
-            scrollX.value,
-            inputRange,
-            [0.95, 1, 0.95],
-            Extrapolate.CLAMP,
-         );
-
-         return {
-            opacity,
-            transform: [{ scale }],
-         };
-      });
+       return { opacity };
+     });
    }, [scrollX]);
 
-   // Handle tab bar layout
-   const handleTabBarLayout = useCallback((event: LayoutChangeEvent) => {
-      setTabBarWidth(event.nativeEvent.layout.width);
-   }, []);
-
-   // Enhanced tab bar design
+   // Render tab bar
    const renderTabBar = () => (
-      <Box
-         style={[
-            {
-               backgroundColor: colorMode === 'dark' ? '#1a1a1a' : '#ffffff',
-               shadowColor: '#000',
-               shadowOffset: { width: 0, height: 2 },
-               shadowOpacity: 0.1,
-               shadowRadius: 8,
-               elevation: 4,
-               borderBottomWidth: 1,
-               borderBottomColor: colorMode === 'dark' ? '#333' : '#f0f0f0',
-            },
-            tabBarStyle
-         ]}
-         paddingHorizontal={16}
-         paddingVertical={12}
-         onLayout={handleTabBarLayout}
-      >
-         <ScrollView
-            ref={tabScrollViewRef}
-            horizontal
-            scrollEnabled={scrollEnabled}
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{
-               paddingHorizontal: routes.length <= 3 ? 0 : 8,
-               flexDirection: 'row',
-               justifyContent: routes.length <= 3 ? 'space-around' : 'flex-start',
-               minWidth: routes.length <= 3 ? screenWidth - 32 : undefined,
-            }}
-            style={{ flexGrow: 0 }}
-         >
-            {routes.map((route, index) => {
-               const isActive = currentIndex === index;
-               const animatedStyle = getTabAnimatedStyle(index);
-               const tabWidth = tabWidths[index] || 100;
+     <Box 
+       style={[
+         {
+           backgroundColor: colorMode === 'dark' ? '#1a1a1a' : '#ffffff',
+           shadowColor: '#000',
+           shadowOffset: { width: 0, height: 2 },
+           shadowOpacity: 0.1,
+           shadowRadius: 8,
+           elevation: 4,
+           borderBottomWidth: 1,
+           borderBottomColor: colorMode === 'dark' ? '#333' : '#f0f0f0',
+         },
+         tabBarStyle
+       ]} 
+       paddingHorizontal={16} 
+       paddingVertical={12}
+     >
+       <ScrollView
+         ref={tabScrollViewRef}
+         horizontal
+         scrollEnabled={scrollEnabled && routes.length > 3}
+         showsHorizontalScrollIndicator={false}
+         contentContainerStyle={{
+           flexDirection: 'row',
+           justifyContent: routes.length <= 3 ? 'space-around' : 'flex-start',
+           minWidth: routes.length <= 3 ? screenWidth - 32 : undefined,
+         }}
+       >
+         {routes.map((route, index) => {
+           const isActive = currentIndex === index;
+           const animatedStyle = getTabAnimatedStyle(index);
 
-               return (
-                  <Box
-                     key={route.key}
-                     onPress={() => handleTabPress(index)}
-                     style={[
-                        {
-                           width: tabWidth,
-                           paddingVertical: 12,
-                           paddingHorizontal: routes.length <= 3 ? 8 : 12,
-                           alignItems: 'center',
-                           justifyContent: 'center',
-                           borderRadius: showIndicator ? 0 : 12,
-                           marginHorizontal: showIndicator ? (routes.length <= 3 ? 0 : 2) : 4,
-                           backgroundColor: showIndicator
-                              ? 'transparent'
-                              : (isActive
-                                 ? (colorMode === 'dark' ? '#007AFF' : '#007AFF')
-                                 : 'transparent'),
-                        },
-                        isActive ? activeTabStyle : tabStyle,
-                     ]}
-                  >
-                     <Animated.View style={[{ alignItems: 'center' }, animatedStyle]}>
-                        <Text
-                           color={showIndicator
-                              ? (isActive
-                                 ? (colorMode === 'dark' ? '#007AFF' : '#007AFF')
-                                 : (colorMode === 'dark' ? '#ffffff' : '#666666'))
-                              : (isActive
-                                 ? '#ffffff'
-                                 : (colorMode === 'dark' ? '#ffffff' : '#666666'))
-                           }
-                           fontSize={16}
-                           fontWeight={isActive ? '600' : '500'}
-                           fontFamily={FontStyles.interMedium.fontFamily}
-                           textAlign="center"
-                           numberOfLines={1}
-                           style={[
-                              {
-                                 textShadowColor: isActive && !showIndicator ? 'rgba(0,0,0,0.1)' : 'transparent',
-                                 textShadowOffset: { width: 0, height: 1 },
-                                 textShadowRadius: 2,
-                              },
-                              isActive ? activeLabelStyle : labelStyle
-                           ]}
-                        >
-                           {route.title}
-                        </Text>
-                     </Animated.View>
-                  </Box>
-               );
-            })}
-
-            {/* Enhanced Indicator - only show if showIndicator is true */}
-            {showIndicator && tabWidths.length > 0 && (
-               <Animated.View
-                  style={[
-                     {
-                        position: 'absolute',
-                        bottom: 4,
-                        height: 3,
-                        backgroundColor: colorMode === 'dark' ? '#007AFF' : '#007AFF',
-                        borderRadius: 2,
-                        shadowColor: '#007AFF',
-                        shadowOffset: { width: 0, height: 2 },
-                        shadowOpacity: 0.3,
-                        shadowRadius: 4,
-                        elevation: 3,
-                     },
-                     indicatorAnimatedStyle,
-                     indicatorStyle,
-                  ]}
-               />
-            )}
-         </ScrollView>
-      </Box>
+           return (
+             <Box
+               key={route.key}
+               onPress={() => handleTabPress(index)}
+               style={[
+                 {
+                   width: tabWidth,
+                   paddingVertical: 12,
+                   paddingHorizontal: 8,
+                   alignItems: 'center',
+                   justifyContent: 'center',
+                   borderRadius: showIndicator ? 0 : 12,
+                   marginHorizontal: showIndicator ? 0 : 4,
+                   backgroundColor: showIndicator 
+                     ? 'transparent' 
+                     : (isActive 
+                       ? '#007AFF'
+                       : 'transparent'),
+                 },
+                 isActive ? activeTabStyle : tabStyle,
+               ]}
+             >
+               <Animated.View style={[{ alignItems: 'center' }, animatedStyle]}>
+                 <Text
+                   color={showIndicator 
+                     ? (isActive 
+                       ? '#007AFF'
+                       : (colorMode === 'dark' ? '#ffffff' : '#666666'))
+                     : (isActive 
+                       ? '#ffffff' 
+                       : (colorMode === 'dark' ? '#ffffff' : '#666666'))
+                   }
+                   fontSize={16}
+                   fontWeight={isActive ? '600' : '500'}
+                   fontFamily={FontStyles.interMedium.fontFamily}
+                   textAlign="center"
+                   numberOfLines={1}
+                   style={isActive ? activeLabelStyle : labelStyle}
+                 >
+                   {route.title}
+                 </Text>
+               </Animated.View>
+             </Box>
+           );
+         })}
+         
+         {/* Indicator */}
+         {showIndicator && (
+           <Animated.View
+             style={[
+               {
+                 position: 'absolute',
+                 bottom: 4,
+                 height: 3,
+                 backgroundColor: '#007AFF',
+                 borderRadius: 2,
+               },
+               indicatorAnimatedStyle,
+               indicatorStyle,
+             ]}
+           />
+         )}
+       </ScrollView>
+     </Box>
    );
 
-   // Simple pan gesture for better swipe detection
-   const panGesture = Gesture.Pan()
-      .onStart(() => {
-         isUserScrolling.current = true;
-      })
-      .onEnd(() => {
-         isUserScrolling.current = false;
-      });
-
    return (
-      <Box flex={1} style={{ backgroundColor: colorMode === 'dark' ? '#000000' : '#ffffff' }}>
-         {renderTabBar()}
-
-         <GestureDetector gesture={panGesture}>
-            <Animated.ScrollView
-               ref={scrollViewRef}
-               horizontal
-               pagingEnabled
-               scrollEventThrottle={16}
-               showsHorizontalScrollIndicator={false}
-               onScroll={scrollHandler}
-               bounces={false}
-               decelerationRate="fast"
-               snapToInterval={screenWidth}
-               snapToAlignment="center"
-               scrollEnabled={true}
-               nestedScrollEnabled={true}
-               contentContainerStyle={{
-                  width: screenWidth * routes.length,
-               }}
-               style={{ flex: 1 }}
-            >
-               {routes.map((route, index) => {
-                  return (
-                     <Box
-                        key={route.key}
-                        width={screenWidth}
-                        style={{
-                           backgroundColor: colorMode === 'dark' ? '#000000' : '#ffffff',
-                        }}
-                     >
-                        {renderScene({ route, index, isActive: currentIndex === index })}
-                     </Box>
-                  );
-               })}
-            </Animated.ScrollView>
-         </GestureDetector>
-      </Box>
+     <Box flex={1} style={{ backgroundColor: colorMode === 'dark' ? '#000000' : '#ffffff' }}>
+       {renderTabBar()}
+       
+       <Animated.ScrollView
+         ref={scrollViewRef}
+         horizontal
+         pagingEnabled
+         scrollEventThrottle={16}
+         showsHorizontalScrollIndicator={false}
+         onScroll={scrollHandler}
+         bounces={false}
+         decelerationRate="fast"
+         snapToInterval={screenWidth}
+         snapToAlignment="center"
+         contentContainerStyle={{
+           width: screenWidth * routes.length,
+         }}
+         style={{ flex: 1 }}
+       >
+         {routes.map((route, index) => (
+           <Box 
+             key={route.key} 
+             width={screenWidth}
+             style={{ 
+               backgroundColor: colorMode === 'dark' ? '#000000' : '#ffffff',
+             }}
+           >
+             {renderScene({ route, index, isActive: currentIndex === index })}
+           </Box>
+         ))}
+       </Animated.ScrollView>
+     </Box>
    );
 };
 
