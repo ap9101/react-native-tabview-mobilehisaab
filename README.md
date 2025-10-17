@@ -182,6 +182,34 @@ export default App;
 />
 ```
 
+### Indicator Toggle
+
+You can choose between animated indicator or background highlighting:
+
+```tsx
+// With indicator (default)
+<TabView
+  routes={routes}
+  initialIndex={index}
+  onIndexChange={setIndex}
+  renderScene={renderScene}
+  showIndicator={true} // Shows animated indicator, no background
+/>
+
+// With background highlighting
+<TabView
+  routes={routes}
+  initialIndex={index}
+  onIndexChange={setIndex}
+  renderScene={renderScene}
+  showIndicator={false} // Shows background color, no indicator
+  activeTabStyle={{
+    backgroundColor: "#007AFF",
+    borderRadius: 12,
+  }}
+/>
+```
+
 ### Dark Mode
 
 The component automatically adapts to your app's color scheme, but you can also customize it:
@@ -222,6 +250,7 @@ The component automatically adapts to your app's color scheme, but you can also 
 | `labelStyle`       | `TextStyle`                       | -       | Custom inactive label style    |
 | `activeLabelStyle` | `TextStyle`                       | -       | Custom active label style      |
 | `indicatorStyle`   | `ViewStyle`                       | -       | Custom indicator style         |
+| `showIndicator`    | `boolean`                         | `true`  | Show/hide animated indicator   |
 
 ### Types
 

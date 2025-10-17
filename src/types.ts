@@ -35,6 +35,8 @@ export interface TabViewProps {
   activeLabelStyle?: TextStyle;
   /** Custom indicator style */
   indicatorStyle?: ViewStyle;
+  /** Show/hide the animated indicator (default: true) */
+  showIndicator?: boolean;
 }
 
 export interface TabBarProps {
