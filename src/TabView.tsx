@@ -117,16 +117,32 @@ const TabView: React.FC<TabViewProps> = ({
 
    // Indicator animation
    const indicatorAnimatedStyle = useAnimatedStyle(() => {
-      const translateX = interpolate(
-         scrollX.value,
-         routes.map((_, i) => i * screenWidth),
-         routes.map((_, i) => i * tabWidth),
-         Extrapolate.CLAMP,
-      );
+      // Calculate actual tab positions based on current index
+      const currentTabIndex = Math.round(scrollX.value / screenWidth);
+      const clampedIndex = Math.max(0, Math.min(currentTabIndex, routes.length - 1));
+      
+      // For even distribution (3 or fewer tabs), calculate position differently
+      let translateX;
+      if (routes.length <= 3) {
+         const tabSpacing = (screenWidth - 32) / routes.length;
+         translateX = interpolate(
+            scrollX.value,
+            routes.map((_, i) => i * screenWidth),
+            routes.map((_, i) => i * tabSpacing),
+            Extrapolate.CLAMP,
+         );
+      } else {
+         translateX = interpolate(
+            scrollX.value,
+            routes.map((_, i) => i * screenWidth),
+            routes.map((_, i) => i * tabWidth),
+            Extrapolate.CLAMP,
+         );
+      }
 
       return {
          transform: [{ translateX }],
-         width: tabWidth,
+         width: routes.length <= 3 ? (screenWidth - 32) / routes.length : tabWidth,
       };
    });
 
