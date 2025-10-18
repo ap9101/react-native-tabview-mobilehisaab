@@ -91,7 +91,7 @@ module.exports = {
 ```tsx
 import React, { useState } from "react";
 import { View, Text, StyleSheet } from "react-native";
-import TabView from "react-native-tabview-mobilehisaab";
+import { TabView } from "react-native-tabview-mobilehisaab";
 
 const App = () => {
   const [index, setIndex] = useState(0);
