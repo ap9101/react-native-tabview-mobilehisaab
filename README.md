@@ -10,7 +10,7 @@ A **beautiful**, **smooth**, and **highly customizable** React Native TabView co
 
 ![TabView Demo](ScreenRecording2025-10-18at12.19.40PM-ezgif.com-video-to-gif-converter.gif)
 
-*Smooth tab transitions with animated indicator and fluid content switching*
+_Smooth tab transitions with animated indicator and fluid content switching_
 
 ## 📱 Live Example
 
@@ -24,7 +24,7 @@ cd tabview-example
 npm install
 # Run on iOS
 npx react-native run-ios
-# Run on Android  
+# Run on Android
 npx react-native run-android
 ```
 
