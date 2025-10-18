@@ -6,6 +6,28 @@ A **beautiful**, **smooth**, and **highly customizable** React Native TabView co
 ![License](https://img.shields.io/npm/l/react-native-tabview-mobilehisaab)
 ![Downloads](https://img.shields.io/npm/dm/react-native-tabview-mobilehisaab)
 
+## 🎬 Demo
+
+![TabView Demo](ScreenRecording2025-10-18at12.19.40PM-ezgif.com-video-to-gif-converter.gif)
+
+*Smooth tab transitions with animated indicator and fluid content switching*
+
+## 📱 Live Example
+
+Check out the complete working example with multiple TabView configurations:
+
+**[View Example on GitHub](https://github.com/ap9101/tabview-example.git)**
+
+```bash
+git clone https://github.com/ap9101/tabview-example.git
+cd tabview-example
+npm install
+# Run on iOS
+npx react-native run-ios
+# Run on Android  
+npx react-native run-android
+```
+
 ## ✨ Features
 
 - 🎨 **Beautiful Design** - Modern, clean UI with smooth animations
@@ -331,10 +353,10 @@ MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## 📞 Support
 
-- 📧 Email: support@mobilehisaab.com
+- 📧 Email: abdullah.return@gmail.com
 - 🐛 Issues: [GitHub Issues](https://github.com/ap9101/react-native-tabview-mobilehisaab/issues)
 - 💬 Discussions: [GitHub Discussions](https://github.com/ap9101/react-native-tabview-mobilehisaab/discussions)
 
 ---
 
-Made with ❤️ by [MobileHisaab Team](https://mobilehisaab.com)
+Made with ❤️ by [Developer Ap]

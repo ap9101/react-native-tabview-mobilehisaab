@@ -16,6 +16,30 @@ import { TabViewProps, TabRoute } from './types';
 
 const { width: screenWidth } = Dimensions.get('window');
 
+// Helper function to get the correct scroll position for RTL
+const getScrollPosition = (index: number, isRTL: boolean, totalRoutes: number) => {
+   if (isRTL) {
+      // For RTL, reverse the index
+      const reversedIndex = totalRoutes - 1 - index;
+      return reversedIndex * screenWidth;
+   }
+   return index * screenWidth;
+};
+
+// Helper function to calculate tab bar scroll position
+const calculateTabBarScrollX = (index: number, totalTabs: number, screenWidth: number, isRTL: boolean, tabWidth: number) => {
+   if (isRTL) {
+      // For RTL, we need to scroll in the opposite direction
+      const reversedIndex = totalTabs - 1 - index;
+      const tabBarScrollX = reversedIndex * tabWidth - screenWidth / 2 + tabWidth / 2;
+      return Math.max(0, tabBarScrollX);
+   } else {
+      // For LTR, calculate from the left side
+      const tabBarScrollX = index * tabWidth - screenWidth / 2 + tabWidth / 2;
+      return Math.max(0, tabBarScrollX);
+   }
+};
+
 const TabView: React.FC<TabViewProps> = ({
    routes = [],
    initialIndex = 0,
@@ -36,8 +60,9 @@ const TabView: React.FC<TabViewProps> = ({
    const [currentIndex, setCurrentIndex] = useState(initialIndex);
    const scrollViewRef = useRef<Animated.ScrollView>(null);
    const tabScrollViewRef = useRef<ScrollView>(null);
+   const isUserScrolling = useRef(false);
 
-   const scrollX = useSharedValue(initialIndex * screenWidth);
+   const scrollX = useSharedValue(getScrollPosition(initialIndex, isRTL, routes.length));
    const { colorMode } = useColorMode();
 
    // Calculate tab width
@@ -54,28 +79,32 @@ const TabView: React.FC<TabViewProps> = ({
    }, [routes.length, tabBarWidthDivider]);
 
    // Update index when scrolling
-   const updateIndex = useCallback((newIndex: number) => {
+   const updateIndexFromScroll = useCallback((newIndex: number) => {
       if (newIndex !== currentIndex && newIndex >= 0 && newIndex < routes.length) {
          setCurrentIndex(newIndex);
          onIndexChange?.(newIndex);
 
          // Auto-scroll tab bar
          if (tabScrollViewRef.current && routes.length > 3) {
-            const targetX = newIndex * tabWidth - screenWidth / 2 + tabWidth / 2;
-            tabScrollViewRef.current.scrollTo({
-               x: Math.max(0, targetX),
-               animated: true,
-            });
+            setTimeout(() => {
+               const tabBarScrollX = calculateTabBarScrollX(newIndex, routes.length, screenWidth, isRTL, tabWidth);
+               tabScrollViewRef.current?.scrollTo({
+                  x: tabBarScrollX,
+                  animated: true,
+               });
+            }, 100);
          }
       }
-   }, [currentIndex, onIndexChange, routes.length, tabWidth]);
+   }, [currentIndex, onIndexChange, routes.length, isRTL, tabWidth]);
 
    // Handle tab press
    const handleTabPress = useCallback((index: number) => {
       if (index === currentIndex) return;
 
-      const targetX = index * screenWidth;
-      scrollX.value = withTiming(targetX, { duration: 300 });
+      isUserScrolling.current = false;
+      const targetX = getScrollPosition(index, isRTL, routes.length);
+
+      scrollX.value = withTiming(targetX, { duration: 350 });
 
       if (scrollViewRef.current) {
          scrollViewRef.current.scrollTo({
@@ -86,40 +115,115 @@ const TabView: React.FC<TabViewProps> = ({
 
       setCurrentIndex(index);
       onIndexChange?.(index);
-   }, [currentIndex, onIndexChange, scrollX]);
+
+      // Auto-scroll tab bar
+      if (tabScrollViewRef.current && routes.length > 3) {
+         setTimeout(() => {
+            const tabBarScrollX = calculateTabBarScrollX(index, routes.length, screenWidth, isRTL, tabWidth);
+            tabScrollViewRef.current?.scrollTo({
+               x: tabBarScrollX,
+               animated: true,
+            });
+         }, 100);
+      }
+   }, [currentIndex, onIndexChange, scrollX, isRTL, routes.length, tabWidth]);
 
    // Initialize
    useEffect(() => {
-      const targetX = initialIndex * screenWidth;
-      scrollX.value = targetX;
+      const targetX = getScrollPosition(initialIndex, isRTL, routes.length);
+      scrollX.value = withTiming(targetX, { duration: 350 });
 
       if (scrollViewRef.current) {
          scrollViewRef.current.scrollTo({
             x: targetX,
-            animated: false,
+            animated: true,
          });
       }
 
       setCurrentIndex(initialIndex);
-   }, [initialIndex, scrollX]);
+
+      // Auto-scroll tab bar
+      if (tabScrollViewRef.current && routes.length > 3) {
+         setTimeout(() => {
+            const tabBarScrollX = calculateTabBarScrollX(initialIndex, routes.length, screenWidth, isRTL, tabWidth);
+            tabScrollViewRef.current?.scrollTo({
+               x: tabBarScrollX,
+               animated: true,
+            });
+         }, 150);
+      }
+   }, [initialIndex, isRTL, routes.length, scrollX, tabWidth]);
 
    // Scroll handler
    const scrollHandler = useAnimatedScrollHandler({
       onScroll: (event) => {
          scrollX.value = event.contentOffset.x;
+
+         if (isUserScrolling.current) {
+            const progress = event.contentOffset.x / screenWidth;
+            let newIndex;
+
+            if (isRTL) {
+               // For RTL, reverse the calculation
+               const scrollIndex = Math.floor(progress + 0.2);
+               newIndex = routes.length - 1 - scrollIndex;
+            } else {
+               newIndex = Math.floor(progress + 0.2);
+            }
+
+            const clampedIndex = Math.max(0, Math.min(newIndex, routes.length - 1));
+            runOnJS(updateIndexFromScroll)(clampedIndex);
+         }
       },
-      onMomentumEnd: (event) => {
-         const newIndex = Math.round(event.contentOffset.x / screenWidth);
-         const clampedIndex = Math.max(0, Math.min(newIndex, routes.length - 1));
-         runOnJS(updateIndex)(clampedIndex);
+      onBeginDrag: () => {
+         isUserScrolling.current = true;
+      },
+      onEndDrag: () => {
+         isUserScrolling.current = false;
       },
    });
 
+   // Handle scroll end
+   const handleScrollEnd = useCallback((event: any) => {
+      const offsetX = event.nativeEvent.contentOffset.x;
+      const rawIndex = Math.round(offsetX / screenWidth);
+      const newIndex = isRTL ? routes.length - 1 - rawIndex : rawIndex;
+
+      if (newIndex !== currentIndex && newIndex >= 0 && newIndex < routes.length) {
+         setCurrentIndex(newIndex);
+         onIndexChange?.(newIndex);
+
+         // Auto-scroll tab bar
+         if (tabScrollViewRef.current && routes.length > 3) {
+            setTimeout(() => {
+               const tabBarScrollX = calculateTabBarScrollX(newIndex, routes.length, screenWidth, isRTL, tabWidth);
+               tabScrollViewRef.current?.scrollTo({
+                  x: tabBarScrollX,
+                  animated: true,
+               });
+            }, 100);
+         }
+      }
+      isUserScrolling.current = false;
+   }, [currentIndex, onIndexChange, routes.length, isRTL, tabWidth]);
+
    // Animated indicator style that follows scroll position
    const indicatorAnimatedStyle = useAnimatedStyle(() => {
-      // Calculate the indicator position based on scroll position
       const progress = scrollX.value / screenWidth;
-      const translateX = progress * tabWidth;
+      let translateX;
+
+      if (isRTL) {
+         // For RTL with row-reverse layout:
+         // When at first tab (index 0), scroll position is at (routes.length - 1) * screenWidth
+         // The indicator should be at the rightmost position (index 0 in reversed layout)
+         const currentScrollIndex = progress;
+         const logicalIndex = routes.length - 1 - currentScrollIndex;
+         // In row-reverse, the first item (index 0) is on the right
+         translateX = (routes.length - 1 - logicalIndex) * tabWidth;
+      } else {
+         // For LTR, normal calculation
+         translateX = progress * tabWidth;
+      }
 
       return {
          transform: [{ translateX }],
@@ -142,11 +246,22 @@ const TabView: React.FC<TabViewProps> = ({
    // Tab animation
    const getTabAnimatedStyle = useCallback((index: number) => {
       return useAnimatedStyle(() => {
-         const inputRange = [
-            (index - 1) * screenWidth,
-            index * screenWidth,
-            (index + 1) * screenWidth,
-         ];
+         let inputRange;
+
+         if (isRTL) {
+            const reversedIndex = routes.length - 1 - index;
+            inputRange = [
+               (reversedIndex - 1) * screenWidth,
+               reversedIndex * screenWidth,
+               (reversedIndex + 1) * screenWidth,
+            ];
+         } else {
+            inputRange = [
+               (index - 1) * screenWidth,
+               index * screenWidth,
+               (index + 1) * screenWidth,
+            ];
+         }
 
          const opacity = interpolate(
             scrollX.value,
@@ -157,7 +272,15 @@ const TabView: React.FC<TabViewProps> = ({
 
          return { opacity };
       });
-   }, [scrollX]);
+   }, [scrollX, isRTL, routes.length]);
+
+   // Render routes in RTL order if needed
+   const orderedRoutes = useMemo(() => {
+      if (isRTL) {
+         return [...routes].reverse();
+      }
+      return routes;
+   }, [routes, isRTL]);
 
    // Render tab bar
    const renderTabBar = () => (
@@ -184,7 +307,7 @@ const TabView: React.FC<TabViewProps> = ({
             scrollEnabled={scrollEnabled && routes.length > 3}
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={{
-               flexDirection: 'row',
+               flexDirection: isRTL ? 'row-reverse' : 'row',
                justifyContent: routes.length <= 3 ? 'space-around' : 'flex-start',
                minWidth: routes.length <= 3 ? screenWidth - 32 : undefined,
             }}
@@ -205,7 +328,7 @@ const TabView: React.FC<TabViewProps> = ({
                            alignItems: 'center',
                            justifyContent: 'center',
                            borderRadius: showIndicator ? 0 : 12,
-                           marginHorizontal: showIndicator ? 0 : 4,
+                           marginHorizontal: showIndicator ? 0 : (isRTL && scrollEnabled ? 6 : 4),
                            backgroundColor: showIndicator
                               ? 'transparent'
                               : (isActive
@@ -245,7 +368,7 @@ const TabView: React.FC<TabViewProps> = ({
                   style={[
                      indicatorBaseStyle,
                      indicatorAnimatedStyle,
-                     indicatorStyle, // User's custom indicator style from props
+                     indicatorStyle,
                   ]}
                />
             )}
@@ -265,6 +388,7 @@ const TabView: React.FC<TabViewProps> = ({
             showsHorizontalScrollIndicator={false}
             onScroll={scrollHandler}
             bounces={false}
+            onMomentumScrollEnd={handleScrollEnd}
             decelerationRate="fast"
             snapToInterval={screenWidth}
             snapToAlignment="center"
@@ -273,17 +397,23 @@ const TabView: React.FC<TabViewProps> = ({
             }}
             style={{ flex: 1 }}
          >
-            {routes.map((route, index) => (
-               <Box
-                  key={route.key}
-                  width={screenWidth}
-                  style={{
-                     backgroundColor: colorMode === 'dark' ? '#000000' : '#ffffff',
-                  }}
-               >
-                  {renderScene({ route, index, isActive: currentIndex === index })}
-               </Box>
-            ))}
+            {orderedRoutes.map((route, scrollIndex) => {
+               // Get the actual route index for isActive check
+               const actualIndex = isRTL ? routes.length - 1 - scrollIndex : scrollIndex;
+               const isActive = currentIndex === actualIndex;
+
+               return (
+                  <Box
+                     key={route.key}
+                     width={screenWidth}
+                     style={{
+                        backgroundColor: colorMode === 'dark' ? '#000000' : '#ffffff',
+                     }}
+                  >
+                     {renderScene({ route, index: actualIndex, isActive })}
+                  </Box>
+               );
+            })}
          </Animated.ScrollView>
       </Box>
    );
