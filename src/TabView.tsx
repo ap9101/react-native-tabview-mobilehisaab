@@ -115,18 +115,29 @@ const TabView: React.FC<TabViewProps> = ({
       },
    });
 
-   // Simple indicator positioning based on current index
-   const calculatedIndicatorStyle = useMemo(() => {
+   // Animated indicator style that follows scroll position
+   const indicatorAnimatedStyle = useAnimatedStyle(() => {
+      // Calculate the indicator position based on scroll position
+      const progress = scrollX.value / screenWidth;
+      const translateX = progress * tabWidth;
+
+      return {
+         transform: [{ translateX }],
+      };
+   });
+
+   // Static indicator style
+   const indicatorBaseStyle = useMemo(() => {
       return {
          position: 'absolute' as const,
          bottom: 4,
-         left: currentIndex * tabWidth,
+         left: 0,
          height: 3,
          width: tabWidth,
          backgroundColor: '#007AFF',
          borderRadius: 2,
       };
-   }, [currentIndex, tabWidth]);
+   }, [tabWidth]);
 
    // Tab animation
    const getTabAnimatedStyle = useCallback((index: number) => {
@@ -228,11 +239,12 @@ const TabView: React.FC<TabViewProps> = ({
                );
             })}
 
-            {/* Indicator */}
+            {/* Animated Indicator */}
             {showIndicator && (
-               <Box
+               <Animated.View
                   style={[
-                     calculatedIndicatorStyle,
+                     indicatorBaseStyle,
+                     indicatorAnimatedStyle,
                      indicatorStyle, // User's custom indicator style from props
                   ]}
                />
