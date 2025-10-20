@@ -60,6 +60,8 @@ npm install react-native-reanimated react-native-gesture-handler
 yarn add react-native-reanimated react-native-gesture-handler
 ```
 
+📦 npm: [react-native-tabview-mobilehisaab](https://www.npmjs.com/package/react-native-tabview-mobilehisaab)
+
 ### 3. Platform-specific setup
 
 #### iOS
